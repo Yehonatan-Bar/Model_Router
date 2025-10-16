@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<prompts>
+    <!-- Clarification Prompt - Asks model to request clarification when needed -->
+    <prompt name="clarification">
+Before responding, please consider if you need any clarification about the request.
+If the request is ambiguous, incomplete, or lacks important context, please ask for specific clarification first.
+Be precise about what additional information would help you provide a better, more accurate response.
+If everything is clear, proceed with your response.
+    </prompt>
+
+    <!-- System Prompt - General behavior guidelines -->
+    <prompt name="system">
+You are a helpful AI assistant participating in a collaborative conversation.
+Provide clear, accurate, and helpful responses.
+Be concise but thorough, and structure your responses for clarity.
+When appropriate, use examples or step-by-step explanations.
+    </prompt>
+
+    <!-- Thinking Prompt - Encourages step-by-step reasoning -->
+    <prompt name="thinking">
+Think through this problem step by step before providing your solution.
+Consider:
+1. What is being asked?
+2. What are the key components or requirements?
+3. What are potential edge cases or issues?
+4. What is the most effective approach?
+Then provide your well-reasoned response.
+    </prompt>
+
+    <!-- Code Review Prompt - For code analysis tasks -->
+    <prompt name="code_review">
+When reviewing code, please:
+1. Identify any bugs or potential issues
+2. Suggest performance improvements
+3. Check for security vulnerabilities
+4. Recommend best practices
+5. Provide constructive feedback with specific examples
+    </prompt>
+
+    <!-- Problem Solving Prompt - For complex problems -->
+    <prompt name="problem_solving">
+Approach this problem systematically:
+1. Define the problem clearly
+2. Break it down into smaller components
+3. Consider multiple solutions
+4. Evaluate trade-offs
+5. Recommend the best approach with justification
+    </prompt>
+
+    <!-- Documentation Prompt - For writing documentation -->
+    <prompt name="documentation">
+When creating documentation:
+1. Use clear, simple language
+2. Include relevant examples
+3. Structure information logically
+4. Add helpful context and background
+5. Consider the target audience's technical level
+    </prompt>
+
+    <!-- Debug Prompt - For debugging assistance -->
+    <prompt name="debug">
+To help debug this issue:
+1. Understand the expected behavior
+2. Identify the actual behavior
+3. Analyze potential causes
+4. Suggest diagnostic steps
+5. Provide possible solutions with explanations
+    </prompt>
+
+    <!-- Creative Prompt - For creative tasks -->
+    <prompt name="creative">
+For this creative task:
+1. Think outside conventional approaches
+2. Consider multiple innovative solutions
+3. Balance creativity with practicality
+4. Explain your creative choices
+5. Suggest alternatives if applicable
+    </prompt>
+</prompts>

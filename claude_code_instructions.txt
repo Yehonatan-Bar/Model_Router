@@ -1,0 +1,314 @@
+ROLE & CAPABILITY:
+You have access to a Model Router API at http://localhost:5000 that routes to multiple AI models. Use this to get second opinions, leverage specialized capabilities, and compare approaches on complex problems.
+
+MODEL SELECTION CRITERIA:
+┌─────────────┬──────────────────────────────┬─────────────────────────────────────────┐
+│ Model       │ Key Capability               │ When to Use                             │
+├─────────────┼──────────────────────────────┼─────────────────────────────────────────┤
+│ o3-pro      │ Max reasoning + file analysis│ Complex algorithms, PDF analysis,       │
+│             │ (PDFs/code)                  │ deep code review, edge cases            │
+├─────────────┼──────────────────────────────┼─────────────────────────────────────────┤
+│ grok        │ 2M token context window      │ Massive documents, entire codebases,    │
+│             │ Fast reasoning               │ very long conversations                 │
+├─────────────┼──────────────────────────────┼─────────────────────────────────────────┤
+│ gpt-5       │ Adjustable reasoning effort  │ General-purpose, balanced tasks         │
+├─────────────┼──────────────────────────────┼─────────────────────────────────────────┤
+│ claude      │ Creative/nuanced responses   │ Writing, nuanced understanding          │
+├─────────────┼──────────────────────────────┼─────────────────────────────────────────┤
+│ claude-opus │ Advanced reasoning           │ Complex creative/analytical tasks       │
+└─────────────┴──────────────────────────────┴─────────────────────────────────────────┘
+
+DECISION TREE:
+1. Need file analysis (PDFs)? → Use o3-pro with file_paths parameter
+2. Processing >100K tokens or very long conversation? → Use grok
+3. Need maximum reasoning depth? → Use o3-pro (always runs max effort)
+4. Want adjustable reasoning/speed tradeoff? → Use gpt-5 with reasoning_effort
+5. Need creative/nuanced output? → Use claude/claude-opus
+6. Want multiple perspectives? → Query 2-3 models in parallel
+
+CRITICAL: PROVIDING COMPREHENSIVE CONTEXT FOR DEEP INSIGHTS
+═══════════════════════════════════════════════════════════════════════════════
+Models generate deep insights ONLY with complete context. ALWAYS provide:
+
+REQUIRED CONTEXT ELEMENTS:
+✓ Complete code snippets (not fragments) - include surrounding functions/classes
+✓ Full error messages and stack traces (entire output, not summaries)
+✓ Complete log sections (not cherry-picked lines)
+✓ Code structure/architecture (how components relate)
+✓ File paths and directory structure (project organization)
+✓ Dependencies and versions (requirements.txt, package.json, etc.)
+✓ Expected vs actual behavior (what should vs what does happen)
+✓ Environment details (OS, runtime version, configuration)
+✓ Related code that interacts with problem area
+
+CONTEXT PROVISION RULES:
+1. Be VERBOSE, not minimal - large context > incomplete context
+2. Include 10-20 lines BEFORE/AFTER problem area for situational awareness
+3. Provide FULL error output - truncated errors miss critical details
+4. Explain code flow - "Function A calls B which queries C"
+5. Include variable states, input data, configuration when debugging
+6. Add comments explaining business logic if not obvious
+7. Use Grok for massive context (2M tokens), O3-Pro for deep reasoning
+
+EXAMPLE - POOR CONTEXT (shallow response):
+"Fix this error: TypeError on line 45"
+
+EXAMPLE - RICH CONTEXT (deep insights):
+```
+Flask API error when processing uploads:
+
+ERROR TRACE:
+Traceback (most recent call last):
+  File "app.py", line 45, in process_upload
+    result = processor.validate(file_data)
+  File "processor.py", line 123, in validate
+    return self._check_format(data['content'])
+TypeError: 'NoneType' object is not subscriptable
+
+ARCHITECTURE:
+app.py (routes) → processor.py (validation) → utils.py (file I/O)
+
+CODE:
+# app.py (lines 40-50)
+@app.route('/upload', methods=['POST'])
+def process_upload():
+    file = request.files.get('document')
+    file_data = utils.read_file(file)
+    result = processor.validate(file_data)  # ERROR - line 45
+    return jsonify(result)
+
+# processor.py (lines 120-130)
+def validate(self, data):
+    if not data:
+        return {'error': 'No data'}
+    return self._check_format(data['content'])  # ERROR - line 123
+
+# utils.py
+def read_file(file_obj):
+    if file_obj is None:
+        return None  # ISSUE
+    return {'content': file_obj.read()}
+
+ENVIRONMENT: Python 3.9.5, Flask 2.0.1, Ubuntu 20.04
+EXPECTED: Validate PDF and return success/error
+ACTUAL: Crashes when file missing from request
+TRIED: Logging shows file_data is None when error occurs
+```
+
+Rich context enables model to identify root cause, understand data flow,
+suggest proper fixes, and recommend architectural improvements.
+═══════════════════════════════════════════════════════════════════════════════
+
+API ENDPOINT STRUCTURE:
+Base URL: http://localhost:5000
+
+POST /api/chat
+Required: model, prompt
+Optional: new_conversation, conversation_id, include_clarification, reasoning_effort, file_paths
+
+```python
+import requests
+
+response = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'o3-pro',               # Required: model name
+    'prompt': 'Your question here',  # Required: user message
+    'new_conversation': True,        # Optional: True=new, False=continue (default: True)
+    'conversation_id': 'optional-id',# Optional: for continuing conversations
+    'include_clarification': True,   # Optional: adds clarification prompt
+    'reasoning_effort': 'high',      # Optional: for gpt-5/o3-pro: minimal/low/medium/high
+    'file_paths': ['path/to/file']   # Optional: ONLY for o3-pro
+})
+
+result = response.json()
+print(result['response'])         # Model's response
+print(result['conversation_id'])  # Save to continue conversation
+```
+
+CONVERSATION MANAGEMENT:
+Start new: Set new_conversation=True (or omit conversation_id)
+Continue: Include conversation_id from previous response
+Duration: Conversations persist 20 days
+Monitor: View live at http://localhost:5000 in browser
+
+ADVANCED CAPABILITIES:
+
+1. O3-PRO FILE ANALYSIS (ONLY model supporting file_paths):
+```python
+response = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'o3-pro',
+    'prompt': 'Analyze and summarize these documents',
+    'file_paths': [
+        'C:/path/to/document.pdf',
+        'C:/path/to/code.py',
+        'C:/path/to/another.pdf'
+    ],
+    'new_conversation': True
+})
+```
+
+2. GROK MASSIVE CONTEXT (2M tokens - with comprehensive context):
+```python
+# Read concatenated codebase
+with open('concatenated_code.txt', 'r', encoding='utf-8') as f:
+    codebase = f.read()
+
+# Provide rich context for deep analysis
+context_prompt = f'''
+PROJECT: E-commerce API (Flask microservice)
+STRUCTURE: app.py (routing), auth/ (JWT), models/ (DB), api/ (endpoints), utils/
+DEPENDENCIES: Flask 2.0.1, SQLAlchemy 1.4.23, PyJWT 2.1.0, Redis 3.5.3
+DEPLOYMENT: Docker on AWS ECS, PostgreSQL RDS, Redis ElastiCache
+
+COMPLETE CODEBASE:
+{codebase}
+
+ANALYSIS REQUIRED:
+1. Security vulnerabilities (SQL injection, XSS, auth bypass, etc.)
+2. Performance bottlenecks (N+1 queries, missing indexes)
+3. Code quality issues (coupling, error handling, duplication)
+4. Architecture problems (circular deps, separation of concerns)
+5. Best practice violations (hardcoded secrets, missing validation)
+
+Provide line numbers, severity ratings, and actionable fixes.
+'''
+
+response = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'grok',
+    'prompt': context_prompt,
+    'new_conversation': True
+})
+```
+
+3. GPT-5 ADJUSTABLE REASONING:
+```python
+# Trade speed for quality
+response = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'gpt-5',
+    'prompt': 'Complex problem requiring deep thought...',
+    'reasoning_effort': 'high',  # minimal/low/medium/high
+    'new_conversation': True
+})
+```
+
+4. MULTI-MODEL COMPARISON:
+```python
+question = "Explain quantum entanglement"
+models = ['o3-pro', 'grok', 'gpt-5', 'claude']
+responses = {}
+
+for model in models:
+    r = requests.post('http://localhost:5000/api/chat', json={
+        'model': model,
+        'prompt': question,
+        'new_conversation': True
+    }).json()
+    responses[model] = r['response']
+
+# Compare different perspectives
+for model, response in responses.items():
+    print(f"\n{model.upper()}:\n{response}")
+```
+
+5. MULTI-TURN CONVERSATIONS:
+```python
+# Initial message
+r1 = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'gpt-5',
+    'prompt': 'What is machine learning?',
+    'new_conversation': True
+}).json()
+
+conv_id = r1['conversation_id']
+
+# Follow-up (maintains context)
+r2 = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'gpt-5',
+    'prompt': 'Give me a Python example',
+    'conversation_id': conv_id
+}).json()
+```
+
+HANDLING LARGE CODEBASES:
+
+Approach 1: Concatenate files for Grok (2M context)
+```python
+def concatenate_code_files(file_paths, output_file='concatenated_code.txt'):
+    with open(output_file, 'w', encoding='utf-8') as outfile:
+        for file_path in file_paths:
+            if os.path.exists(file_path):
+                outfile.write(f"\n{'='*80}\nFILE: {file_path}\n{'='*80}\n\n")
+                with open(file_path, 'r', encoding='utf-8') as infile:
+                    outfile.write(infile.read())
+                outfile.write("\n\n")
+    return output_file
+
+# Use with Grok
+files = ['app.py', 'routes.py', 'models.py']  # Can be 100+ files
+output = concatenate_code_files(files)
+
+with open(output, 'r') as f:
+    code = f.read()
+
+response = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'grok',
+    'prompt': f'{code}\n\nAnalyze this codebase for bugs and improvements.',
+    'new_conversation': True
+}).json()
+```
+
+Approach 2: Use O3-Pro file_paths for deep analysis
+```python
+response = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'o3-pro',
+    'prompt': 'Comprehensive code review with maximum reasoning',
+    'file_paths': [
+        'C:/projects/app.py',
+        'C:/projects/routes.py',
+        'C:/projects/models.py'
+    ],
+    'new_conversation': True
+}).json()
+```
+
+OTHER ENDPOINTS:
+GET  /health                              # Check API health
+GET  /api/models                          # List available models
+GET  /api/conversations                   # List all conversations
+GET  /api/conversations/{conversation_id} # Get specific conversation history
+DELETE /api/conversations/{conversation_id} # Delete conversation
+
+CONSTRAINTS & BEST PRACTICES:
+- Conversations tied to one model (cannot switch models mid-conversation)
+- O3-Pro ALWAYS uses maximum reasoning effort (cannot be reduced)
+- File analysis (file_paths parameter) ONLY works with o3-pro
+- Grok handles largest context (2M tokens) for massive documents
+- Include include_clarification=True for ambiguous requests
+- Monitor live conversations at http://localhost:5000
+
+COMMON PATTERNS:
+
+Pattern 1: Deep analysis of specific problem
+→ Use o3-pro with max reasoning
+
+Pattern 2: Processing entire documentation site or large codebase
+→ Use grok with 2M context window
+
+Pattern 3: Quick iteration with adjustable quality
+→ Use gpt-5 with reasoning_effort parameter
+
+Pattern 4: Getting consensus or multiple perspectives
+→ Query o3-pro, grok, gpt-5, claude in parallel and compare
+
+Pattern 5: PDF analysis or mixed file types
+→ Use o3-pro with file_paths parameter
+
+Pattern 6: Extended brainstorming session
+→ Use grok for long multi-turn conversation without context loss
+
+QUICK REFERENCE:
+File analysis only     → o3-pro
+Largest context        → grok (2M tokens)
+Maximum reasoning      → o3-pro (always high effort)
+Adjustable reasoning   → gpt-5
+Creative tasks         → claude/claude-opus
+Multiple perspectives  → query 2-3 models simultaneously
