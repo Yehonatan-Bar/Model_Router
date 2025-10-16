@@ -41,19 +41,19 @@ class GPT5Client:
         self,
         messages: List[Message],
         model: str = "gpt-5-pro",
-        max_tokens: int = 4000,
+        max_output_tokens: int = 4000,
         temperature: float = 0.7,
         reasoning_effort: str = "high"
     ) -> str:
         """
-        Call GPT-5 or GPT-5 Pro using standard OpenAI chat completions API
+        Call GPT-5 or GPT-5 Pro using OpenAI Responses API (supports reasoning)
 
         Args:
             messages: List of conversation messages
             model: Model to use (gpt-5, gpt-5-pro, etc.)
-            max_tokens: Maximum tokens in response
+            max_output_tokens: Maximum tokens in response
             temperature: Sampling temperature (0.0 to 2.0)
-            reasoning_effort: Effort level for reasoning (high, medium, low)
+            reasoning_effort: Effort level for reasoning (high, medium, low, minimal)
 
         Returns:
             The model's response text
@@ -65,27 +65,16 @@ class GPT5Client:
             # Convert messages to OpenAI format
             formatted_messages = self._format_messages(messages)
 
-            # Try specified model first, fallback to GPT-4 if not available
-            try:
-                response = self.client.chat.completions.create(
-                    model=model,
-                    messages=formatted_messages,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    reasoning_effort=reasoning_effort
-                )
-            except Exception as e:
-                # Fallback to GPT-4 if GPT-5 is not available
-                print(f"Warning: {model} not available, falling back to GPT-4. Error: {str(e)}")
-                response = self.client.chat.completions.create(
-                    model="gpt-4-turbo-preview",
-                    messages=formatted_messages,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    reasoning_effort=reasoning_effort
-                )
+            # Use Responses API which supports reasoning parameter
+            response = self.client.responses.create(
+                model=model,
+                reasoning={"effort": reasoning_effort},
+                input=formatted_messages,
+                max_output_tokens=max_output_tokens,
+                temperature=temperature
+            )
 
-            return response.choices[0].message.content
+            return response.output_text
 
         except Exception as e:
             return f"Error calling GPT model: {str(e)}"

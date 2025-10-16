@@ -3,7 +3,7 @@
 Gemini 2.5 Pro API Client Module
 =================================
 Handles interactions with Google's most powerful Gemini 2.5 Pro model
-with MAXIMUM reasoning effort using thinking_budget configuration.
+with advanced reasoning capabilities.
 """
 
 import os
@@ -23,11 +23,11 @@ class Message:
 
 
 class GeminiClient:
-    """Client for Google's Gemini 2.5 Pro with maximum reasoning power"""
+    """Client for Google's Gemini 2.5 Pro with advanced reasoning capabilities"""
 
     def __init__(self, api_key: Optional[str] = None):
         """
-        Initialize the Gemini 2.5 Pro client with maximum reasoning
+        Initialize the Gemini 2.5 Pro client
 
         Args:
             api_key: Google API key. If not provided, will use GEMINI_API_KEY from environment
@@ -47,7 +47,7 @@ class GeminiClient:
         temperature: Optional[float] = None
     ) -> str:
         """
-        Call Gemini 2.5 Pro with MAXIMUM reasoning effort
+        Call Gemini 2.5 Pro with advanced reasoning
 
         Args:
             messages: List of conversation messages
@@ -68,15 +68,9 @@ class GeminiClient:
             if file_paths:
                 uploaded_files = self._upload_files(file_paths)
 
-            # Configure generation with MAXIMUM reasoning effort
-            # thinking_budget = -1 enables dynamic thinking for optimal reasoning
-            generation_config_dict = {
-                'extra_config': {
-                    'thinking_config': {
-                        'thinking_budget': -1  # Dynamic thinking - maximum reasoning
-                    }
-                }
-            }
+            # Configure generation parameters
+            # Note: Gemini 2.5 Pro automatically uses advanced reasoning capabilities
+            generation_config_dict = {}
 
             # Add optional parameters
             if max_tokens:
@@ -84,11 +78,15 @@ class GeminiClient:
             if temperature is not None:
                 generation_config_dict['temperature'] = temperature
 
-            # Initialize Gemini 2.5 Pro with maximum reasoning configuration
-            model = genai.GenerativeModel(
-                'gemini-2.5-pro',
-                generation_config=genai.types.GenerationConfig(**generation_config_dict)
-            )
+            # Initialize Gemini 2.5 Pro
+            if generation_config_dict:
+                model = genai.GenerativeModel(
+                    'gemini-2.5-pro',
+                    generation_config=genai.types.GenerationConfig(**generation_config_dict)
+                )
+            else:
+                # Use default configuration if no custom parameters
+                model = genai.GenerativeModel('gemini-2.5-pro')
 
             # Prepare content parts
             content_parts = []
@@ -181,7 +179,7 @@ def call_gemini(
     file_paths: Optional[List[str]] = None
 ) -> str:
     """
-    Call Gemini 2.5 Pro with maximum reasoning effort
+    Call Gemini 2.5 Pro with advanced reasoning
 
     Args:
         messages: List of conversation messages

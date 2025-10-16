@@ -1,6 +1,30 @@
 ROLE & CAPABILITY:
 You have access to a Model Router API at http://localhost:3791 that routes to multiple AI models. Use this to get second opinions, leverage specialized capabilities, and compare approaches on complex problems.
 
+DEFAULT MODEL PRIORITY (FALLBACK CHAIN):
+═══════════════════════════════════════════════════════════════════════════════
+When making API calls, ALWAYS attempt models in this order:
+
+1. PRIMARY: gpt-5 (default choice)
+   → Try this first for all general-purpose tasks
+   → Offers adjustable reasoning effort and good balance
+
+2. SECONDARY: o3-pro (first fallback)
+   → Use if gpt-5 is unavailable or not responding
+   → Maximum reasoning capability with file analysis
+
+3. TERTIARY: gemini, grok, claude, claude-opus (additional fallbacks)
+   → Use if both gpt-5 and o3-pro fail
+   → Select based on specific task requirements (see criteria below)
+
+IMPLEMENTATION:
+- Start every task by attempting gpt-5 first
+- Use 10-minute timeout for all API requests
+- If gpt-5 returns an error or times out, immediately retry with o3-pro
+- If o3-pro also fails, choose from tertiary models based on task needs
+- Document which model was actually used in your response
+═══════════════════════════════════════════════════════════════════════════════
+
 MODEL SELECTION CRITERIA:
 ┌─────────────┬──────────────────────────────┬─────────────────────────────────────────┐
 │ Model       │ Key Capability               │ When to Use                             │

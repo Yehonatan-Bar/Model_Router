@@ -29,7 +29,7 @@ class ClaudeClient:
         'claude': 'claude-sonnet-4-5-20250929',
         'claude-sonnet': 'claude-sonnet-4-5-20250929',
         'claude-sonnet-4.5': 'claude-sonnet-4-5-20250929',
-        'claude-opus': 'claude-opus-20250815',
+        'claude-opus': 'claude-opus-4.1-20250514',
         'claude-haiku': 'claude-haiku-20250305',
     }
 

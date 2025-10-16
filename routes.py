@@ -88,7 +88,7 @@ def register_routes(app, conversation_manager, prompt_config):
                 # Map model names
                 model_map = {
                     'claude': 'claude-sonnet-4-5-20250929',
-                    'claude-opus': 'claude-opus-20250815',
+                    'claude-opus': 'claude-opus-4.1-20250514',
                 }
                 claude_model = model_map.get(model, model)
                 response = call_claude(messages, claude_model)
