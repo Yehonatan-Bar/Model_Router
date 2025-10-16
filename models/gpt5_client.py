@@ -42,7 +42,6 @@ class GPT5Client:
         messages: List[Message],
         model: str = "gpt-5-pro",
         max_output_tokens: int = 4000,
-        temperature: float = 0.7,
         reasoning_effort: str = "high"
     ) -> str:
         """
@@ -52,7 +51,6 @@ class GPT5Client:
             messages: List of conversation messages
             model: Model to use (gpt-5, gpt-5-pro, etc.)
             max_output_tokens: Maximum tokens in response
-            temperature: Sampling temperature (0.0 to 2.0)
             reasoning_effort: Effort level for reasoning (high, medium, low, minimal)
 
         Returns:
@@ -60,18 +58,22 @@ class GPT5Client:
 
         Raises:
             Exception: If the API call fails
+
+        Note:
+            Temperature parameter is not supported by reasoning models.
+            The reasoning process requires deterministic behavior.
         """
         try:
             # Convert messages to OpenAI format
             formatted_messages = self._format_messages(messages)
 
             # Use Responses API which supports reasoning parameter
+            # Note: temperature is NOT supported with reasoning models
             response = self.client.responses.create(
                 model=model,
                 reasoning={"effort": reasoning_effort},
                 input=formatted_messages,
-                max_output_tokens=max_output_tokens,
-                temperature=temperature
+                max_output_tokens=max_output_tokens
             )
 
             return response.output_text

@@ -220,7 +220,8 @@ response = requests.post('http://localhost:3791/api/chat', json={
 
 3. GPT-5 ADJUSTABLE REASONING:
 ```python
-# Trade speed for quality
+# Trade speed for quality with adjustable reasoning effort
+# Note: Temperature is NOT supported - reasoning models require deterministic behavior
 response = requests.post('http://localhost:3791/api/chat', json={
     'model': 'gpt-5',
     'prompt': 'Complex problem requiring deep thought...',
@@ -333,6 +334,7 @@ CONSTRAINTS & BEST PRACTICES:
 - Conversations tied to one model (cannot switch models mid-conversation)
 - O3-Pro ALWAYS uses maximum reasoning effort (cannot be reduced)
 - Gemini ALWAYS uses maximum reasoning with dynamic thinking allocation
+- GPT-5/GPT-5 Pro: Temperature parameter NOT supported (reasoning requires determinism)
 - File analysis (file_paths parameter) works with o3-pro and gemini only
 - Grok handles largest context (2M tokens) for massive documents
 - Include include_clarification=True for ambiguous requests
