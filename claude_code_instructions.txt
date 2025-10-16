@@ -1,5 +1,5 @@
 ROLE & CAPABILITY:
-You have access to a Model Router API at http://localhost:5000 that routes to multiple AI models. Use this to get second opinions, leverage specialized capabilities, and compare approaches on complex problems.
+You have access to a Model Router API at http://localhost:3791 that routes to multiple AI models. Use this to get second opinions, leverage specialized capabilities, and compare approaches on complex problems.
 
 MODEL SELECTION CRITERIA:
 ┌─────────────┬──────────────────────────────┬─────────────────────────────────────────┐
@@ -103,7 +103,7 @@ suggest proper fixes, and recommend architectural improvements.
 ═══════════════════════════════════════════════════════════════════════════════
 
 API ENDPOINT STRUCTURE:
-Base URL: http://localhost:5000
+Base URL: http://localhost:3791
 
 POST /api/chat
 Required: model, prompt
@@ -112,13 +112,13 @@ Optional: new_conversation, conversation_id, include_clarification, reasoning_ef
 ```python
 import requests
 
-response = requests.post('http://localhost:5000/api/chat', json={
+response = requests.post('http://localhost:3791/api/chat', json={
     'model': 'o3-pro',               # Required: model name
     'prompt': 'Your question here',  # Required: user message
-    'new_conversation': True,        # Optional: True=new, False=continue (default: True)
+    'new_conversation': True,        # Optional: True=new, False=continue (default: False, but creates new if no conversation_id)
     'conversation_id': 'optional-id',# Optional: for continuing conversations
-    'include_clarification': True,   # Optional: adds clarification prompt
-    'reasoning_effort': 'high',      # Optional: for gpt-5/o3-pro: minimal/low/medium/high
+    'include_clarification': True,   # Optional: adds clarification prompt (default: True)
+    'reasoning_effort': 'high',      # Optional: for gpt-5 only (o3-pro is hardcoded to 'high'): minimal/low/medium/high
     'file_paths': ['path/to/file']   # Optional: for o3-pro/gemini only
 })
 
@@ -131,14 +131,14 @@ CONVERSATION MANAGEMENT:
 Start new: Set new_conversation=True (or omit conversation_id)
 Continue: Include conversation_id from previous response
 Duration: Conversations persist 20 days
-Monitor: View live at http://localhost:5000 in browser
+Monitor: View live at http://localhost:3791 in browser
 
 ADVANCED CAPABILITIES:
 
 1. FILE ANALYSIS (o3-pro and gemini support file_paths):
 ```python
 # O3-Pro: Fixed maximum reasoning effort
-response = requests.post('http://localhost:5000/api/chat', json={
+response = requests.post('http://localhost:3791/api/chat', json={
     'model': 'o3-pro',
     'prompt': 'Analyze and summarize these documents',
     'file_paths': [
@@ -150,7 +150,7 @@ response = requests.post('http://localhost:5000/api/chat', json={
 })
 
 # Gemini 2.5 Pro: Dynamic thinking allocation (adapts reasoning to complexity)
-response = requests.post('http://localhost:5000/api/chat', json={
+response = requests.post('http://localhost:3791/api/chat', json={
     'model': 'gemini',
     'prompt': 'Deep analysis of these files with maximum reasoning',
     'file_paths': [
@@ -187,7 +187,7 @@ ANALYSIS REQUIRED:
 Provide line numbers, severity ratings, and actionable fixes.
 '''
 
-response = requests.post('http://localhost:5000/api/chat', json={
+response = requests.post('http://localhost:3791/api/chat', json={
     'model': 'grok',
     'prompt': context_prompt,
     'new_conversation': True
@@ -197,7 +197,7 @@ response = requests.post('http://localhost:5000/api/chat', json={
 3. GPT-5 ADJUSTABLE REASONING:
 ```python
 # Trade speed for quality
-response = requests.post('http://localhost:5000/api/chat', json={
+response = requests.post('http://localhost:3791/api/chat', json={
     'model': 'gpt-5',
     'prompt': 'Complex problem requiring deep thought...',
     'reasoning_effort': 'high',  # minimal/low/medium/high
@@ -212,7 +212,7 @@ models = ['o3-pro', 'gemini', 'grok', 'gpt-5', 'claude']
 responses = {}
 
 for model in models:
-    r = requests.post('http://localhost:5000/api/chat', json={
+    r = requests.post('http://localhost:3791/api/chat', json={
         'model': model,
         'prompt': question,
         'new_conversation': True
@@ -227,7 +227,7 @@ for model, response in responses.items():
 5. MULTI-TURN CONVERSATIONS:
 ```python
 # Initial message
-r1 = requests.post('http://localhost:5000/api/chat', json={
+r1 = requests.post('http://localhost:3791/api/chat', json={
     'model': 'gpt-5',
     'prompt': 'What is machine learning?',
     'new_conversation': True
@@ -236,7 +236,7 @@ r1 = requests.post('http://localhost:5000/api/chat', json={
 conv_id = r1['conversation_id']
 
 # Follow-up (maintains context)
-r2 = requests.post('http://localhost:5000/api/chat', json={
+r2 = requests.post('http://localhost:3791/api/chat', json={
     'model': 'gpt-5',
     'prompt': 'Give me a Python example',
     'conversation_id': conv_id
@@ -264,7 +264,7 @@ output = concatenate_code_files(files)
 with open(output, 'r') as f:
     code = f.read()
 
-response = requests.post('http://localhost:5000/api/chat', json={
+response = requests.post('http://localhost:3791/api/chat', json={
     'model': 'grok',
     'prompt': f'{code}\n\nAnalyze this codebase for bugs and improvements.',
     'new_conversation': True
@@ -274,7 +274,7 @@ response = requests.post('http://localhost:5000/api/chat', json={
 Approach 2: Use O3-Pro or Gemini file_paths for deep analysis
 ```python
 # O3-Pro for fixed maximum reasoning
-response = requests.post('http://localhost:5000/api/chat', json={
+response = requests.post('http://localhost:3791/api/chat', json={
     'model': 'o3-pro',
     'prompt': 'Comprehensive code review with maximum reasoning',
     'file_paths': [
@@ -286,7 +286,7 @@ response = requests.post('http://localhost:5000/api/chat', json={
 }).json()
 
 # Gemini for adaptive maximum reasoning (dynamically allocates thinking)
-response = requests.post('http://localhost:5000/api/chat', json={
+response = requests.post('http://localhost:3791/api/chat', json={
     'model': 'gemini',
     'prompt': 'Deep architectural analysis with maximum reasoning',
     'file_paths': [
@@ -312,7 +312,7 @@ CONSTRAINTS & BEST PRACTICES:
 - File analysis (file_paths parameter) works with o3-pro and gemini only
 - Grok handles largest context (2M tokens) for massive documents
 - Include include_clarification=True for ambiguous requests
-- Monitor live conversations at http://localhost:5000
+- Monitor live conversations at http://localhost:3791
 
 COMMON PATTERNS:
 
