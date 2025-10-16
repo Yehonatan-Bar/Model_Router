@@ -73,6 +73,8 @@ def find_available_port(preferred_ports):
 
 def main():
     """Main entry point for the application"""
+    import os
+
     # Try ports in order: 3791, then 3003
     preferred_ports = [3791, 3003]
     port = find_available_port(preferred_ports)
@@ -86,28 +88,31 @@ def main():
         print("="*60 + "\n")
         return
 
-    # Show which port we're using
-    if port != preferred_ports[0]:
-        print(f"\n⚠️  Port {preferred_ports[0]} is in use, using fallback port {port}\n")
+    # Only show startup message in main process (not in reloader child)
+    # WERKZEUG_RUN_MAIN is set by Flask's reloader in the child process
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        # Show which port we're using
+        if port != preferred_ports[0]:
+            print(f"\n⚠️  Port {preferred_ports[0]} is in use, using fallback port {port}\n")
 
-    print("\n" + "="*60)
-    print("🚀 MODEL ROUTER API SERVER")
-    print("="*60)
-    print(f"\n✨ Server running on port {port}")
-    print("\nEndpoints:")
-    print(f"  - Web Interface: http://localhost:{port}")
-    print(f"  - API Base: http://localhost:{port}/api")
-    print(f"  - Chat: POST http://localhost:{port}/api/chat")
-    print(f"  - List Models: GET http://localhost:{port}/api/models")
-    print(f"  - Conversations: GET http://localhost:{port}/api/conversations")
-    print("\nAvailable Models:")
-    print("  - O3-Pro (OpenAI) - Maximum reasoning effort + file support")
-    print("  - GPT-5 / GPT-5 Pro (OpenAI) - Advanced reasoning")
-    print("  - Claude Sonnet 4.5 / Opus (Anthropic)")
-    print("  - Grok 4 Fast Reasoning (xAI) - 2M context window")
-    print("  - Gemini 2.5 Pro (Google) - Maximum reasoning + file support")
-    print("\nPress CTRL+C to stop the server")
-    print("="*60 + "\n")
+        print("\n" + "="*60)
+        print("🚀 MODEL ROUTER API SERVER")
+        print("="*60)
+        print(f"\n✨ Server running on port {port}")
+        print("\nEndpoints:")
+        print(f"  - Web Interface: http://localhost:{port}")
+        print(f"  - API Base: http://localhost:{port}/api")
+        print(f"  - Chat: POST http://localhost:{port}/api/chat")
+        print(f"  - List Models: GET http://localhost:{port}/api/models")
+        print(f"  - Conversations: GET http://localhost:{port}/api/conversations")
+        print("\nAvailable Models:")
+        print("  - O3-Pro (OpenAI) - Maximum reasoning effort + file support")
+        print("  - GPT-5 / GPT-5 Pro (OpenAI) - Advanced reasoning")
+        print("  - Claude Sonnet 4.5 / Opus (Anthropic)")
+        print("  - Grok 4 Fast Reasoning (xAI) - 2M context window")
+        print("  - Gemini 2.5 Pro (Google) - Maximum reasoning + file support")
+        print("\nPress CTRL+C to stop the server")
+        print("="*60 + "\n")
 
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
 
