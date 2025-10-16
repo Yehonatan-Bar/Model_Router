@@ -1,208 +1,187 @@
-# Model Router - Multi-Model AI Communication System
+# Model Router
 
-## Overview
-Model Router is a Flask-based API server that enables Claude Code to communicate with multiple AI models (GPT-5, Claude variants) through a unified interface. It includes conversation management, live monitoring, and XML-based prompt configuration.
+Flask API providing unified access to **O3-Pro**, **Gemini 2.5 Pro**, **Grok 4**, **GPT-5**, and **Claude** with intelligent routing, conversation management, and live monitoring.
 
 ## Features
 
-### Core Capabilities
-- **Multi-Model Support**: Communicate with GPT-5, Claude Sonnet, and Claude Opus
-- **Conversation Management**: Start new conversations or continue existing ones with full history tracking
-- **Live Web Monitor**: Real-time browser interface to watch all conversations as they happen
-- **XML Prompt Configuration**: Customizable prompts that can be added to requests automatically
-- **Clarification System**: Models can request clarification when prompts are ambiguous
-- **Session Persistence**: Conversations are maintained for up to 20 days
+- **7 AI Models**: O3-Pro, Gemini 2.5 Pro, Grok 4, GPT-5, Claude Sonnet/Opus/Haiku
+- **File Analysis**: PDF/code analysis (O3-Pro & Gemini)
+- **Massive Context**: 2M tokens with Grok
+- **Maximum Reasoning**: O3-Pro (fixed) & Gemini (adaptive)
+- **Live Web Monitor**: Real-time conversation tracking
+- **Persistent Conversations**: 20-day history retention
+
+## Model Capabilities
+
+| Model | Capability | Context | Files | Use Case |
+|-------|-----------|---------|-------|----------|
+| **O3-Pro** | Max reasoning (fixed) | Standard | ✅ | Complex algorithms, deep analysis |
+| **Gemini 2.5 Pro** | Max reasoning (adaptive) | Standard | ✅ | Multi-modal, dynamic complexity |
+| **Grok 4** | 2M token context | 2M tokens | ❌ | Entire codebases, massive docs |
+| **GPT-5** | Adjustable reasoning | Standard | ❌ | General-purpose, speed control |
+| **Claude Sonnet/Opus** | Creative & nuanced | Standard | ❌ | Writing, creative tasks |
 
 ## Quick Start
 
-### 1. Install Dependencies
 ```bash
+# Install
 pip install -r requirements.txt
-```
 
-### 2. Start the Server
-```bash
+# Configure .env
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+XAI_API_KEY=xai-...
+GOOGLE_API_KEY=...
+
+# Run
 python model_router.py
+
+# Monitor: http://localhost:5000
 ```
-
-The server will start on `http://localhost:5000`
-
-### 3. Open the Web Monitor
-Navigate to `http://localhost:5000` in your browser to see the live conversation monitor.
 
 ## API Usage
 
-### Send a Message to a Model
-
+### Basic Request
 ```python
 import requests
 
-response = requests.post('http://localhost:5000/api/chat', json={
-    'model': 'gpt-5',  # or 'claude', 'claude-opus'
-    'prompt': 'Your question here',
-    'new_conversation': True,  # Start fresh conversation
-    'include_clarification': True,  # Add clarification prompt
-    'reasoning_effort': 'high'  # For GPT-5: 'minimal', 'low', 'medium', 'high'
-})
+r = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'o3-pro',  # or 'gemini', 'grok', 'gpt-5', 'claude'
+    'prompt': 'Your question',
+    'new_conversation': True
+}).json()
 
-result = response.json()
-print(f"Response: {result['response']}")
-print(f"Conversation ID: {result['conversation_id']}")
+print(r['response'])
 ```
 
-### Continue a Conversation
-
+### File Analysis
 ```python
-response = requests.post('http://localhost:5000/api/chat', json={
-    'model': 'gpt-5',
-    'prompt': 'Follow-up question',
-    'conversation_id': 'previous-conversation-id'
+# O3-Pro (fixed max) or Gemini (adaptive max)
+requests.post('http://localhost:5000/api/chat', json={
+    'model': 'gemini',
+    'prompt': 'Analyze these files',
+    'file_paths': ['doc.pdf', 'code.py']
 })
 ```
 
-## API Endpoints
+### Massive Context (Grok 2M)
+```python
+with open('codebase.txt', 'r') as f:
+    code = f.read()
+
+requests.post('http://localhost:5000/api/chat', json={
+    'model': 'grok',
+    'prompt': f'{code}\n\nFind vulnerabilities'
+})
+```
+
+### Compare Models
+```python
+for model in ['o3-pro', 'gemini', 'grok']:
+    r = requests.post('http://localhost:5000/api/chat', json={
+        'model': model, 'prompt': 'Question', 'new_conversation': True
+    }).json()
+    print(f"{model}: {r['response']}")
+```
+
+## Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/api/chat` | POST | Send a message to a model |
-| `/api/models` | GET | List available models |
-| `/api/conversations` | GET | List all active conversations |
-| `/api/conversations/<id>` | GET | Get full conversation history |
-| `/api/conversations/<id>` | DELETE | Delete a conversation |
+| `/api/chat` | POST | Send message to model |
+| `/api/models` | GET | List models |
+| `/api/conversations` | GET | List conversations |
+| `/api/conversations/<id>` | GET/DELETE | Get or delete conversation |
 
-## Files Structure
+## Structure
 
 ```
 Model_Router/
-├── model_router.py           # Main Flask server
-├── prompts.xml              # XML prompt configuration
-├── claude_code_example.py   # Example usage script
-├── test_client.py          # Test client with examples
-├── requirements.txt        # Python dependencies
-└── README.md              # This file
+├── model_router.py       # Flask server
+├── models/               # Model clients
+│   ├── gpt5_client.py
+│   ├── o3_client.py
+│   ├── claude_client.py
+│   ├── grok_client.py
+│   └── gemini_client.py
+├── prompts.xml           # Prompt config
+├── requirements.txt
+└── README.md
+```
+
+## Model Selection
+
+**Decision Flow:**
+1. File analysis (PDF/code) → `o3-pro` or `gemini`
+2. Large context (>100K tokens) → `grok`
+3. Maximum reasoning → `o3-pro` (fixed) or `gemini` (adaptive)
+4. Speed control → `gpt-5` with `reasoning_effort`
+5. Creative tasks → `claude`
+
+**Examples:**
+```python
+# Deep code review
+requests.post('http://localhost:5000/api/chat', json={
+    'model': 'o3-pro',
+    'prompt': 'Security audit',
+    'file_paths': ['app.py', 'auth.py']
+})
+
+# Massive context
+requests.post('http://localhost:5000/api/chat', json={
+    'model': 'grok',
+    'prompt': f'{entire_docs}\nFind inconsistencies'
+})
+
+# Adaptive reasoning
+requests.post('http://localhost:5000/api/chat', json={
+    'model': 'gemini',
+    'prompt': 'Architecture analysis',
+    'file_paths': ['design.pdf']
+})
 ```
 
 ## Configuration
 
-### Environment Variables
-The system uses API keys from your `.env` files:
-- `OPENAI_API_KEY` - For GPT models
-- `ANTHROPIC_API_KEY` - For Claude models
-
-### XML Prompts
-Edit `prompts.xml` to customize system prompts. Available prompts:
-- `clarification` - Asks models to request clarification when needed
-- `system` - General system behavior
-- `thinking` - Encourages step-by-step reasoning
-- `code_review` - For code analysis tasks
-- `problem_solving` - For complex problems
-- `documentation` - For writing documentation
-- `debug` - For debugging assistance
-- `creative` - For creative tasks
-
-## Example Usage from Claude Code
-
-```python
-from claude_code_example import ask_model
-
-# Ask GPT-5
-result = ask_model(
-    prompt="Explain quantum computing",
-    model="gpt-5",
-    new_conversation=True
-)
-print(result['response'])
-
-# Ask Claude for comparison
-result = ask_model(
-    prompt="Explain quantum computing",
-    model="claude",
-    new_conversation=True
-)
-print(result['response'])
-
-# Continue conversation
-result = ask_model(
-    prompt="Can you give an example?",
-    model="claude",
-    conversation_id=result['conversation_id']
-)
-print(result['response'])
-```
-
-## Testing
-
-Run the test suite:
+**Environment Variables:**
 ```bash
-python test_client.py
+OPENAI_API_KEY=sk-...        # O3-Pro, GPT-5
+ANTHROPIC_API_KEY=sk-ant-... # Claude
+XAI_API_KEY=xai-...          # Grok
+GOOGLE_API_KEY=...           # Gemini
 ```
 
-This will test:
-- Model availability
-- GPT-5 communication
-- Claude communication
-- Conversation continuity
-- Conversation listing
+**Customize Prompts:** Edit `prompts.xml` for system behavior
 
-## Web Monitor Features
+## Key Features
 
-The live web interface at `http://localhost:5000` provides:
-- Real-time conversation list
-- Live message streaming
-- Conversation history viewer
-- Test panel for sending messages
-- Model selection
-- Active connection status
+**Reasoning Control:**
+- O3-Pro: Fixed maximum (non-adjustable)
+- Gemini: Adaptive (scales to complexity)
+- GPT-5: Manual (`minimal`|`low`|`medium`|`high`)
+- Grok: Fast with 2M context
 
-## Advanced Features
+**File Support:** O3-Pro & Gemini only (PDF, code, text)
 
-### Reasoning Effort (GPT-5)
-Control the thinking depth:
-- `minimal` - Fast, simple responses
-- `low` - Quick reasoning
-- `medium` - Balanced approach
-- `high` - Maximum thinking power
-
-### Conversation Metadata
-Attach custom metadata to conversations:
-```python
-response = requests.post('http://localhost:5000/api/chat', json={
-    'model': 'gpt-5',
-    'prompt': 'Your question',
-    'new_conversation': True,
-    'metadata': {
-        'project': 'my-project',
-        'user': 'claude-code',
-        'task': 'debugging'
-    }
-})
-```
+**Persistence:** Conversations auto-saved 20 days
 
 ## Troubleshooting
 
-### Server Won't Start
-- Check that ports 5000 is not in use
-- Verify API keys are set in `.env` files
-- Ensure all dependencies are installed
+```bash
+# Verify setup
+curl http://localhost:5000/api/models
 
-### Models Not Responding
-- Verify API keys are valid
-- Check internet connection
-- Ensure you have access to the specified models
+# Check keys
+echo $OPENAI_API_KEY $ANTHROPIC_API_KEY $XAI_API_KEY $GOOGLE_API_KEY
+```
 
-### Web Interface Issues
-- Clear browser cache
-- Check browser console for errors
-- Ensure JavaScript is enabled
+## Best Practices
 
-## Notes
+- **Provide full context**: Include complete error traces, code structure, dependencies
+- **Choose right model**: O3-Pro/Gemini for deep reasoning, Grok for massive context, GPT-5 for speed control
+- **Use absolute paths** for file analysis
+- **Leverage file_paths** for PDFs/code (O3-Pro, Gemini)
 
-- Conversations are automatically cleaned up after 20 days
-- The server runs in debug mode by default (auto-reload on code changes)
-- All API responses include timestamps
-- WebSocket support enables real-time updates
+---
 
-## Support
-
-For issues or questions, check the server logs or modify the code as needed. The system is designed to be easily extensible for adding new models or features.
+**Model Router** - Multi-model AI access for Claude Code 🚀

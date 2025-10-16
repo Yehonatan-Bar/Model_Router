@@ -8,6 +8,9 @@ MODEL SELECTION CRITERIA:
 │ o3-pro      │ Max reasoning + file analysis│ Complex algorithms, PDF analysis,       │
 │             │ (PDFs/code)                  │ deep code review, edge cases            │
 ├─────────────┼──────────────────────────────┼─────────────────────────────────────────┤
+│ gemini      │ Max reasoning + file analysis│ Complex analysis, multi-modal tasks,    │
+│             │ Dynamic thinking allocation  │ documents+code, adaptive reasoning      │
+├─────────────┼──────────────────────────────┼─────────────────────────────────────────┤
 │ grok        │ 2M token context window      │ Massive documents, entire codebases,    │
 │             │ Fast reasoning               │ very long conversations                 │
 ├─────────────┼──────────────────────────────┼─────────────────────────────────────────┤
@@ -19,9 +22,9 @@ MODEL SELECTION CRITERIA:
 └─────────────┴──────────────────────────────┴─────────────────────────────────────────┘
 
 DECISION TREE:
-1. Need file analysis (PDFs)? → Use o3-pro with file_paths parameter
+1. Need file analysis (PDFs/code)? → Use o3-pro or gemini with file_paths parameter
 2. Processing >100K tokens or very long conversation? → Use grok
-3. Need maximum reasoning depth? → Use o3-pro (always runs max effort)
+3. Need maximum reasoning depth? → Use o3-pro (fixed max) or gemini (dynamic max)
 4. Want adjustable reasoning/speed tradeoff? → Use gpt-5 with reasoning_effort
 5. Need creative/nuanced output? → Use claude/claude-opus
 6. Want multiple perspectives? → Query 2-3 models in parallel
@@ -48,7 +51,7 @@ CONTEXT PROVISION RULES:
 4. Explain code flow - "Function A calls B which queries C"
 5. Include variable states, input data, configuration when debugging
 6. Add comments explaining business logic if not obvious
-7. Use Grok for massive context (2M tokens), O3-Pro for deep reasoning
+7. Use Grok for massive context (2M tokens), O3-Pro/Gemini for deep reasoning
 
 EXAMPLE - POOR CONTEXT (shallow response):
 "Fix this error: TypeError on line 45"
@@ -116,7 +119,7 @@ response = requests.post('http://localhost:5000/api/chat', json={
     'conversation_id': 'optional-id',# Optional: for continuing conversations
     'include_clarification': True,   # Optional: adds clarification prompt
     'reasoning_effort': 'high',      # Optional: for gpt-5/o3-pro: minimal/low/medium/high
-    'file_paths': ['path/to/file']   # Optional: ONLY for o3-pro
+    'file_paths': ['path/to/file']   # Optional: for o3-pro/gemini only
 })
 
 result = response.json()
@@ -132,8 +135,9 @@ Monitor: View live at http://localhost:5000 in browser
 
 ADVANCED CAPABILITIES:
 
-1. O3-PRO FILE ANALYSIS (ONLY model supporting file_paths):
+1. FILE ANALYSIS (o3-pro and gemini support file_paths):
 ```python
+# O3-Pro: Fixed maximum reasoning effort
 response = requests.post('http://localhost:5000/api/chat', json={
     'model': 'o3-pro',
     'prompt': 'Analyze and summarize these documents',
@@ -141,6 +145,17 @@ response = requests.post('http://localhost:5000/api/chat', json={
         'C:/path/to/document.pdf',
         'C:/path/to/code.py',
         'C:/path/to/another.pdf'
+    ],
+    'new_conversation': True
+})
+
+# Gemini 2.5 Pro: Dynamic thinking allocation (adapts reasoning to complexity)
+response = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'gemini',
+    'prompt': 'Deep analysis of these files with maximum reasoning',
+    'file_paths': [
+        'C:/path/to/document.pdf',
+        'C:/path/to/code.py'
     ],
     'new_conversation': True
 })
@@ -193,7 +208,7 @@ response = requests.post('http://localhost:5000/api/chat', json={
 4. MULTI-MODEL COMPARISON:
 ```python
 question = "Explain quantum entanglement"
-models = ['o3-pro', 'grok', 'gpt-5', 'claude']
+models = ['o3-pro', 'gemini', 'grok', 'gpt-5', 'claude']
 responses = {}
 
 for model in models:
@@ -256,11 +271,24 @@ response = requests.post('http://localhost:5000/api/chat', json={
 }).json()
 ```
 
-Approach 2: Use O3-Pro file_paths for deep analysis
+Approach 2: Use O3-Pro or Gemini file_paths for deep analysis
 ```python
+# O3-Pro for fixed maximum reasoning
 response = requests.post('http://localhost:5000/api/chat', json={
     'model': 'o3-pro',
     'prompt': 'Comprehensive code review with maximum reasoning',
+    'file_paths': [
+        'C:/projects/app.py',
+        'C:/projects/routes.py',
+        'C:/projects/models.py'
+    ],
+    'new_conversation': True
+}).json()
+
+# Gemini for adaptive maximum reasoning (dynamically allocates thinking)
+response = requests.post('http://localhost:5000/api/chat', json={
+    'model': 'gemini',
+    'prompt': 'Deep architectural analysis with maximum reasoning',
     'file_paths': [
         'C:/projects/app.py',
         'C:/projects/routes.py',
@@ -280,7 +308,8 @@ DELETE /api/conversations/{conversation_id} # Delete conversation
 CONSTRAINTS & BEST PRACTICES:
 - Conversations tied to one model (cannot switch models mid-conversation)
 - O3-Pro ALWAYS uses maximum reasoning effort (cannot be reduced)
-- File analysis (file_paths parameter) ONLY works with o3-pro
+- Gemini ALWAYS uses maximum reasoning with dynamic thinking allocation
+- File analysis (file_paths parameter) works with o3-pro and gemini only
 - Grok handles largest context (2M tokens) for massive documents
 - Include include_clarification=True for ambiguous requests
 - Monitor live conversations at http://localhost:5000
@@ -288,7 +317,7 @@ CONSTRAINTS & BEST PRACTICES:
 COMMON PATTERNS:
 
 Pattern 1: Deep analysis of specific problem
-→ Use o3-pro with max reasoning
+→ Use o3-pro (fixed max reasoning) or gemini (adaptive max reasoning)
 
 Pattern 2: Processing entire documentation site or large codebase
 → Use grok with 2M context window
@@ -297,18 +326,22 @@ Pattern 3: Quick iteration with adjustable quality
 → Use gpt-5 with reasoning_effort parameter
 
 Pattern 4: Getting consensus or multiple perspectives
-→ Query o3-pro, grok, gpt-5, claude in parallel and compare
+→ Query o3-pro, gemini, grok, gpt-5, claude in parallel and compare
 
 Pattern 5: PDF analysis or mixed file types
-→ Use o3-pro with file_paths parameter
+→ Use o3-pro or gemini with file_paths parameter
 
 Pattern 6: Extended brainstorming session
 → Use grok for long multi-turn conversation without context loss
 
+Pattern 7: Adaptive reasoning for varying complexity
+→ Use gemini with dynamic thinking (scales reasoning automatically)
+
 QUICK REFERENCE:
-File analysis only     → o3-pro
-Largest context        → grok (2M tokens)
-Maximum reasoning      → o3-pro (always high effort)
-Adjustable reasoning   → gpt-5
-Creative tasks         → claude/claude-opus
-Multiple perspectives  → query 2-3 models simultaneously
+File analysis            → o3-pro, gemini
+Largest context          → grok (2M tokens)
+Maximum reasoning (fixed)→ o3-pro (always high effort)
+Maximum reasoning (dynamic)→ gemini (adapts to complexity)
+Adjustable reasoning     → gpt-5
+Creative tasks           → claude/claude-opus
+Multiple perspectives    → query 2-3 models simultaneously
